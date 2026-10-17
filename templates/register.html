@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}注册 - 个人记账本{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <h2>注册</h2>
+  <form method="post">
+    <div class="form-group">
+      <label>用户名</label>
+      <input type="text" name="username" required autofocus>
+    </div>
+    <div class="form-group">
+      <label>密码（至少 6 位）</label>
+      <input type="password" name="password" required>
+    </div>
+    <div class="form-group">
+      <label>确认密码</label>
+      <input type="password" name="password2" required>
+    </div>
+    <button type="submit" class="btn" style="width:100%;">注册</button>
+  </form>
+  <p class="tip">已有账号？<a href="{{ url_for('login') }}">去登录</a></p>
+</div>
+{% endblock %}

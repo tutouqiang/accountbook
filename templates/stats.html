@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}统计 - 个人记账本{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2>按月统计</h2>
+
+  {% if monthly %}
+  <table>
+    <thead>
+      <tr>
+        <th>月份</th>
+        <th>收入</th>
+        <th>支出</th>
+        <th>结余</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for m in monthly %}
+      <tr>
+        <td>{{ m.month }}</td>
+        <td class="income">¥ {{ "%.2f"|format(m.income) }}</td>
+        <td class="expense">¥ {{ "%.2f"|format(m.expense) }}</td>
+        <td style="font-weight:bold;">¥ {{ "%.2f"|format(m.balance) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div style="margin-top:20px;">
+    <canvas id="barChart" style="max-height:320px;"></canvas>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script>
+    if (typeof Chart !== "undefined") {
+      const labels  = {{ monthly|map(attribute='month')|list|tojson }};
+      const income  = {{ monthly|map(attribute='income')|list|tojson }};
+      const expense = {{ monthly|map(attribute='expense')|list|tojson }};
+
+      new Chart(document.getElementById("barChart"), {
+        type: "bar",
+        data: {
+          labels: labels.slice().reverse(),
+          datasets: [
+            { label: "收入", data: income.slice().reverse(),  backgroundColor: "#27ae60" },
+            { label: "支出", data: expense.slice().reverse(), backgroundColor: "#e74c3c" }
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    }
+  </script>
+
+  {% else %}
+    <div class="empty">还没有数据，先去记几笔账吧 📊</div>
+  {% endif %}
+</div>
+{% endblock %}

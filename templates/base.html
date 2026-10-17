@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}个人记账本{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  {# 导航栏：所有页面共用，改一处全站生效 #}
+  <div class="navbar">
+    <span class="logo">💰 个人记账本</span>
+    <div>
+      {% if g.user %}
+        <span style="color:#7f8c8d;font-size:14px;">你好，{{ g.user['username'] }}</span>
+        <a href="{{ url_for('index') }}">首页</a>
+        <a href="{{ url_for('stats') }}">统计</a>
+        <a href="{{ url_for('add_record') }}">记一笔</a>
+        <a href="{{ url_for('logout') }}">退出</a>
+      {% else %}
+        <a href="{{ url_for('login') }}">登录</a>
+        <a href="{{ url_for('register') }}">注册</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="container">
+    {# flash 消息：显示"记账成功""密码错误"这类提示 #}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </div>
+
+</body>
+</html>

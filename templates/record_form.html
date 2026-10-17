@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}{{ '修改记录' if record else '记一笔' }} - 个人记账本{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:520px;margin:0 auto;">
+  <h2>{{ '修改记录' if record else '记一笔' }}</h2>
+
+  <form method="post">
+
+    {# 收入 / 支出 选择 #}
+    <div class="form-group">
+      <label>类型</label>
+      <select name="kind" id="kind">
+        <option value="expense" {{ 'selected' if record and record['kind'] == 'expense' else '' }}>支出</option>
+        <option value="income"  {{ 'selected' if record and record['kind'] == 'income'  else '' }}>收入</option>
+      </select>
+    </div>
+
+    {# 分类下拉：用 data-kind 标记，方便 JS 按类型过滤 #}
+    <div class="form-group">
+      <label>分类</label>
+      <select name="category_id" id="category" required>
+        {% for c in categories %}
+          <option value="{{ c['id'] }}" data-kind="{{ c['kind'] }}"
+            {{ 'selected' if record and record['category_id'] == c['id'] else '' }}>
+            {{ c['name'] }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>金额</label>
+      <input type="number" name="amount" step="0.01" min="0.01" required
+             value="{{ record['amount'] if record else '' }}" placeholder="0.00">
+    </div>
+
+    <div class="form-group">
+      <label>日期</label>
+      <input type="date" name="record_date" required
+             value="{{ record['record_date'] if record else today }}">
+    </div>
+
+    <div class="form-group">
+      <label>备注（选填）</label>
+      <input type="text" name="note" maxlength="100"
+             value="{{ record['note'] if record and record['note'] else '' }}"
+             placeholder="比如：和同学吃午饭">
+    </div>
+
+    <button type="submit" class="btn" style="width:100%;">
+      {{ '保存修改' if record else '保存' }}
+    </button>
+    <a href="{{ url_for('index') }}" class="btn btn-gray"
+       style="width:100%;text-align:center;margin-top:8px;">返回</a>
+  </form>
+</div>
+
+<script>
+  // 小功能：选"收入"时，分类下拉只显示收入类分类（反之亦然）
+  // 这样用户不会出现"支出 + 工资"这种不合理的组合
+  const kindSel = document.getElementById("kind");
+  const catSel  = document.getElementById("category");
+
+  function filterCategories() {
+    const kind = kindSel.value;
+    let firstVisible = null;
+    for (const opt of catSel.options) {
+      const show = opt.dataset.kind === kind;
+      opt.hidden = !show;
+      opt.disabled = !show;
+      if (show && firstVisible === null) firstVisible = opt;
+    }
+    // 如果当前选中的被隐藏了，就自动跳到第一个可见的
+    if (catSel.selectedOptions.length === 0 || catSel.selectedOptions[0].hidden) {
+      if (firstVisible) firstVisible.selected = true;
+    }
+  }
+
+  kindSel.addEventListener("change", filterCategories);
+  filterCategories();   // 页面加载时先跑一次
+</script>
+{% endblock %}

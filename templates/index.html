@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}首页 - 个人记账本{% endblock %}
+
+{% block content %}
+
+  {# ---------- 收支概览 ---------- #}
+  <div class="summary">
+    <div class="item">
+      <div class="label">总收入</div>
+      <div class="value income">¥ {{ "%.2f"|format(total_income) }}</div>
+    </div>
+    <div class="item">
+      <div class="label">总支出</div>
+      <div class="value expense">¥ {{ "%.2f"|format(total_expense) }}</div>
+    </div>
+    <div class="item">
+      <div class="label">结余</div>
+      <div class="value">¥ {{ "%.2f"|format(balance) }}</div>
+    </div>
+  </div>
+
+  {# ---------- 分类饼图 ---------- #}
+  {% if chart_labels %}
+  <div class="card">
+    <h2>支出分类占比</h2>
+    <div class="chart-box">
+      <canvas id="pieChart"></canvas>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script>
+    // 如果 CDN 没加载成功（比如断网），就跳过画图，页面其他部分照常用
+    if (typeof Chart !== "undefined") {
+      const labels = {{ chart_labels|tojson }};
+      const values = {{ chart_values|tojson }};
+      const colors = ["#e74c3c","#e67e22","#f1c40f","#2ecc71","#1abc9c",
+                      "#3498db","#9b59b6","#34495e","#e84393","#00b894"];
+
+      new Chart(document.getElementById("pieChart"), {
+        type: "doughnut",
+        data: {
+          labels: labels,
+          datasets: [{
+            data: values,
+            backgroundColor: colors.slice(0, labels.length)
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: "right" },
+            tooltip: {
+              callbacks: {
+                label: function (ctx) {
+                  return ctx.label + "：¥" + ctx.parsed.toFixed(2);
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+  </script>
+  {% endif %}
+
+  {# ---------- 账单列表 ---------- #}
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h2 style="margin:0;">账单明细</h2>
+      <a href="{{ url_for('add_record') }}" class="btn">+ 记一笔</a>
+    </div>
+
+    {# 月份筛选 #}
+    <form method="get" style="margin-bottom:16px;display:flex;gap:8px;align-items:center;">
+      <label style="font-size:14px;color:#555;">按月份筛选：</label>
+      <input type="month" name="month" value="{{ month }}"
+             style="padding:6px 10px;border:1px solid #ddd;border-radius:5px;">
+      <button type="submit" class="btn btn-sm">筛选</button>
+      {% if month %}
+        <a href="{{ url_for('index') }}" class="btn btn-gray btn-sm">清除</a>
+      {% endif %}
+    </form>
+
+    {% if records %}
+    <table>
+      <thead>
+        <tr>
+          <th>日期</th>
+          <th>分类</th>
+          <th>类型</th>
+          <th>金额</th>
+          <th>备注</th>
+          <th style="width:120px;">操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in records %}
+        <tr>
+          <td>{{ r['record_date'] }}</td>
+          <td>{{ r['category_name'] }}</td>
+          <td>
+            {% if r['kind'] == 'income' %}
+              <span style="color:#27ae60;">收入</span>
+            {% else %}
+              <span style="color:#e74c3c;">支出</span>
+            {% endif %}
+          </td>
+          <td class="{{ 'income' if r['kind'] == 'income' else 'expense' }}">
+            {{ '+' if r['kind'] == 'income' else '-' }}¥{{ "%.2f"|format(r['amount']) }}
+          </td>
+          <td>{{ r['note'] or '—' }}</td>
+          <td>
+            <a href="{{ url_for('edit_record', record_id=r['id']) }}" class="btn btn-sm">编辑</a>
+            {# 删除用表单 POST，不用链接 GET：避免浏览器预加载/爬虫误删数据 #}
+            <form method="post" action="{{ url_for('delete_record', record_id=r['id']) }}"
+                  style="display:inline;"
+                  onsubmit="return confirm('确定删除这条记录吗？');">
+              <button type="submit" class="btn btn-danger btn-sm">删除</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <div class="empty">还没有记账记录，点右上角"记一笔"开始吧 ✍️</div>
+    {% endif %}
+  </div>
+
+{% endblock %}
