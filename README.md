@@ -2,6 +2,8 @@
 
 一个基于 Python + Flask 的个人收支记账 Web 应用。
 
+> 仓库地址：https://github.com/tutouqiang/jizhangben
+
 ## 功能
 
 - 用户注册 / 登录 / 退出（密码加密存储）
